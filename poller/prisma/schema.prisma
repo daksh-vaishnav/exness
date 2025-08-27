@@ -13,17 +13,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model MiniTicker {
-  eventTime DateTime @map("E") // event timestamp (ms)
-  symbol    String   @map("s") // trading pair (e.g. BTCUSDT)
-  close     Decimal  @map("c") @db.Decimal(38, 18) // last price
-  open      Decimal  @map("o") @db.Decimal(38, 18) // open price
-  high      Decimal  @map("h") @db.Decimal(38, 18) // high price
-  low       Decimal  @map("l") @db.Decimal(38, 18) // low price
-  volume    Decimal  @map("v") @db.Decimal(38, 18) // base asset volume
-  quoteVol  Decimal  @map("q") @db.Decimal(38, 18) // quote asset volume
-  createdAt DateTime @default(now()) // insert time
+model Trades {
+  e         String   @map("e") // event type
+  E         DateTime @map("E") // event timestamp (ms)
+  s         String   @map("s") // trading pair (e.g. BTCUSDT)
+  a         BigInt   @map("a") // aggregate trade ID
+  p         Decimal  @map("p") @db.Decimal(38, 18) // price
+  q         Decimal  @map("q") @db.Decimal(38, 18) // quantity
+  f         BigInt   @map("f") // first trade ID
+  l         BigInt   @map("l") // last trade ID
+  T         DateTime @map("T") // trade timestamp (ms)
+  m         Boolean  @map("m") // is the buyer the market maker?
+  M         Boolean  @map("M") // ignore
+  createdAt DateTime @default(now()) // insert time 
 
-  @@id([symbol, eventTime]) // composite PK
-  @@map("mini_tickers") // table name
+  @@id([s, T]) // composite PK
+  @@map("trades") // table name
 }
