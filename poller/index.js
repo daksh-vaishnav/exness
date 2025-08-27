@@ -17,7 +17,7 @@ ws.onopen = () => {
 ws.onmessage = async (event) => {
   console.log("📩 Message from server");
   const trades = JSON.parse(event.data);
-  // addTrade(trades);
+  addTrade(trades);
   publishTrade(trades);
 };
 

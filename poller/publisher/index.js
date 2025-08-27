@@ -9,7 +9,7 @@ const publisher = new Redis({
 export const publishTrade = async (trade) => {
     try {
         await publisher.publish('trade', JSON.stringify(trade));
-        console.log("Published trade:", trade);
+        console.log("Published trade");
     } catch (err) {
         console.error("Error publishing trade:", err);
     }
