@@ -23,67 +23,73 @@ docker run -d \
   timescale/timescaledb:2.21.2-pg17
 
 
+
+
 CREATE EXTENSION IF NOT EXISTS timescaledb;
-SELECT create_hypertable('mini_tickers', 'E');
 
-CREATE MATERIALIZED VIEW candle_5m
+SELECT create_hypertable('trades', 'T');
+
+CREATE MATERIALIZED VIEW candles_1m
 WITH (timescaledb.continuous) AS
-SELECT
-  s,
-  time_bucket('5 minutes', "E") AS bucket,
-  first(o, "E") AS open,
-  max(h) AS high,
-  min(l) AS low,
-  last(c, "E") AS close,
-  sum(v) AS volume,
-  sum(q) AS quote_volume
-FROM mini_tickers
-GROUP BY s, bucket;
+SELECT time_bucket('1 minute', "T") AS bucket,
+       s,
+       first(p, "T") AS open,
+       max(p)      AS high,
+       min(p)      AS low,
+       last(p, "T")  AS close,
+       SUM(q)      AS volume
+FROM trades
+GROUP BY bucket, s;
 
 
-
-CREATE MATERIALIZED VIEW candle_3m
+CREATE MATERIALIZED VIEW candles_5m
 WITH (timescaledb.continuous) AS
-SELECT
-  s,
-  time_bucket('3 minutes', "E") AS bucket,
-  first(o, "E") AS open,
-  max(h) AS high,
-  min(l) AS low,
-  last(c, "E") AS close,
-  sum(v) AS volume,
-  sum(q) AS quote_volume
-FROM mini_tickers
-GROUP BY s, bucket;
+SELECT time_bucket('5 minutes', "T") AS bucket,
+       s,
+       first(p, "T") AS open,
+       max(p)      AS high,
+       min(p)      AS low,
+       last(p, "T")  AS close,
+       SUM(q)      AS volume
+FROM trades
+GROUP BY bucket, s;
 
 
-CREATE MATERIALIZED VIEW candle_10m
-WITH (timescaledb.continuous) AS
-SELECT
-  s,
-  time_bucket('10 minutes', "E") AS bucket,
-  first(o, "E") AS open,
-  max(h) AS high,
-  min(l) AS low,
-  last(c, "E") AS close,
-  sum(v) AS volume,
-  sum(q) AS quote_volume
-FROM mini_tickers
-GROUP BY s, bucket;
+SELECT time_bucket('5 minutes', bucket) AS bucket,
+       s,
+       first(open, bucket) AS open,
+       max(high)           AS high,
+       min(low)            AS low,
+       last(close, bucket) AS close,
+       SUM(volume)         AS volume
+FROM candles_1m
+WHERE s = 'XRPUSDT'
+GROUP BY bucket, s
+ORDER BY bucket;
+
 
 
 Keep Them Updated
 Enable automatic refresh policy so Timescale keeps aggregates up-to-date:
 
-SELECT add_continuous_aggregate_policy('candle_5m',
-    start_offset => INTERVAL '1 month',
-    end_offset   => INTERVAL '1 minute',
-    schedule_interval => INTERVAL '1 minute');
+SELECT add_continuous_aggregate_policy('candles_1m',
+    start_offset => INTERVAL '7 days',   -- how far back to refresh
+    end_offset   => INTERVAL '1 minute', -- keep current data fresh
+    schedule_interval => INTERVAL '1 minute'  -- how often to run refresh
+);
+
+
+SELECT add_continuous_aggregate_policy('candles_5m',
+    start_offset => INTERVAL '30 days',
+    end_offset   => INTERVAL '5 minutes',
+    schedule_interval => INTERVAL '5 minutes'
+);
+
 
 Repeat for each aggregate (5m, 15m, 1d, etc.).
 
 
 SELECT *
-FROM candle_5m
-WHERE s = 'BTCUSDT'x
+FROM candle_3m
+WHERE s = 'BTCUSDT'
 ORDER BY bucket desc;
