@@ -15,45 +15,47 @@ const tradeQueue = new Queue('trade-queue', {
     redis: { host: REDIS_HOST, port: REDIS_PORT },
 });
 
-
 tradeQueue.on('ready', () => {
     console.log('Redis is connected and queue is ready');
     console.log({ REDIS_HOST, REDIS_PORT, BATCH_SIZE });
 
 });
 
-// Log connection errors
 tradeQueue.on('error', (err) => {
     console.error('Redis connection error:', err);
 });
 
-// Example function to enqueue trades
 export async function addTrade(trade) {
-    await tradeQueue.add(trade); // Push job into Redis
+    await tradeQueue.add(trade);
 }
 
-// addTrade({ symbol: 'AAPL', price: 189.50, volume: 10 });
 tradeQueue.process(async (job) => {
-    batch.push(job.data);
-    console.log('Buffer size:', batch.length);
-    // If we reached batch size, flush immediately
-    if (batch.length >= BATCH_SIZE) {
-        console.log('Processing batch');
+    const { E, e, s, a, p, q, f, l, T, m, M } = job.data;
 
-        batch.map(async (items) => {
-            items = items.map((item) => ({
-                eventTime: new Date(item.E),       // convert timestamp to BigInt
-                symbol: item.s,
-                close: item.c,
-                open: item.o,
-                high: item.h,
-                low: item.l,
-                volume: item.v,
-                quoteVol: item.q,
-            }));
-            const res = await prisma.miniTicker.createMany({ data: items, skipDuplicates: true });
-            console.log('Batch processed immediately due to size limit.', res);
-        })
-        batch = [];
+    batch.push({
+        E: new Date(E),
+        T: new Date(T),
+        e: String(e),
+        s: String(s),
+        a: String(a),
+        p: parseFloat(p),
+        q: parseFloat(q),
+        f: BigInt(f),
+        l: BigInt(l),
+        m: Boolean(m),
+        M: Boolean(M)
+    });
+
+    if (batch.length >= BATCH_SIZE) {
+        console.log('Buffer size:', batch.length);
+        try {
+            await prisma.trades.createMany({ data: batch, skipDuplicates: true });
+            console.log('Batch processed immediately due to size limit', batch.length);
+        } catch (error) {
+            console.error('Error processing batch:', error);
+        }
+        finally {
+            batch = [];
+        }
     }
 });

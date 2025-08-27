@@ -14,18 +14,18 @@ datasource db {
 }
 
 model Trades {
-  e         String   @map("e") // event type
-  E         DateTime @map("E") // event timestamp (ms)
-  s         String   @map("s") // trading pair (e.g. BTCUSDT)
-  a         BigInt   @map("a") // aggregate trade ID
-  p         Decimal  @map("p") @db.Decimal(38, 18) // price
-  q         Decimal  @map("q") @db.Decimal(38, 18) // quantity
-  f         BigInt   @map("f") // first trade ID
-  l         BigInt   @map("l") // last trade ID
-  T         DateTime @map("T") // trade timestamp (ms)
-  m         Boolean  @map("m") // is the buyer the market maker?
-  M         Boolean  @map("M") // ignore
-  createdAt DateTime @default(now()) // insert time 
+  e         String?   @map("e") // event type
+  E         DateTime? @map("E") // event timestamp (ms)
+  s         String    @map("s") // trading pair (e.g. BTCUSDT)
+  a         String?   @map("a") // aggregate trade ID
+  p         Decimal?  @map("p") @db.Decimal(38, 18) // price
+  q         Decimal?  @map("q") @db.Decimal(38, 18) // quantity
+  f         BigInt?   @map("f") // first trade ID
+  l         BigInt?   @map("l") // last trade ID
+  T         DateTime  @map("T") // trade timestamp (ms)
+  m         Boolean?  @map("m") // is the buyer the market maker?
+  M         Boolean?  @map("M") // ignore
+  createdAt DateTime  @default(now()) // insert time 
 
   @@id([s, T]) // composite PK
   @@map("trades") // table name
