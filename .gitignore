@@ -1,0 +1,51 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+yarn.lock
+.pnpm-debug.log
+
+# Next.js
+.next/
+out/
+
+# Production
+build/
+dist/
+
+# Prisma
+prisma/*.db-journal
+*.db-journal
+*.db-shm
+*.db-wal
+.env
+
+# Logs
+logs
+*.log
+*.out
+*.err
+
+# Testing & Coverage
+coverage/
+.nyc_output/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDEs & Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*.iml
+
+# Misc
+*.bak
+*.tmp
+*.cache
+.cache/

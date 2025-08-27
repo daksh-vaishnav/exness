@@ -1,0 +1,29 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model MiniTicker {
+  eventTime DateTime @map("E") // event timestamp (ms)
+  symbol    String   @map("s") // trading pair (e.g. BTCUSDT)
+  close     Decimal  @map("c") @db.Decimal(38, 18) // last price
+  open      Decimal  @map("o") @db.Decimal(38, 18) // open price
+  high      Decimal  @map("h") @db.Decimal(38, 18) // high price
+  low       Decimal  @map("l") @db.Decimal(38, 18) // low price
+  volume    Decimal  @map("v") @db.Decimal(38, 18) // base asset volume
+  quoteVol  Decimal  @map("q") @db.Decimal(38, 18) // quote asset volume
+  createdAt DateTime @default(now()) // insert time
+
+  @@id([symbol, eventTime]) // composite PK
+  @@map("mini_tickers") // table name
+}

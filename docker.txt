@@ -1,0 +1,89 @@
+docker run -d \
+  --name mypg \
+  -p 5431:5432 \
+  -e POSTGRES_PASSWORD=postgres \
+  -v pgdata:/var/lib/postgresql/data \
+  postgres
+
+
+
+docker run -d \
+  --name my_redis \
+  -p 6379:6379 \
+  -v redisdata:/data \
+  redis redis-server --appendonly yes
+
+
+docker run -d \
+  --name timescaledb \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_USER=postgres \
+  -e POSTGRES_DB=trades \
+  -p 5421:5432 \
+  timescale/timescaledb:2.21.2-pg17
+
+
+CREATE EXTENSION IF NOT EXISTS timescaledb;
+SELECT create_hypertable('mini_tickers', 'E');
+
+CREATE MATERIALIZED VIEW candle_5m
+WITH (timescaledb.continuous) AS
+SELECT
+  s,
+  time_bucket('5 minutes', "E") AS bucket,
+  first(o, "E") AS open,
+  max(h) AS high,
+  min(l) AS low,
+  last(c, "E") AS close,
+  sum(v) AS volume,
+  sum(q) AS quote_volume
+FROM mini_tickers
+GROUP BY s, bucket;
+
+
+
+CREATE MATERIALIZED VIEW candle_3m
+WITH (timescaledb.continuous) AS
+SELECT
+  s,
+  time_bucket('3 minutes', "E") AS bucket,
+  first(o, "E") AS open,
+  max(h) AS high,
+  min(l) AS low,
+  last(c, "E") AS close,
+  sum(v) AS volume,
+  sum(q) AS quote_volume
+FROM mini_tickers
+GROUP BY s, bucket;
+
+
+CREATE MATERIALIZED VIEW candle_10m
+WITH (timescaledb.continuous) AS
+SELECT
+  s,
+  time_bucket('10 minutes', "E") AS bucket,
+  first(o, "E") AS open,
+  max(h) AS high,
+  min(l) AS low,
+  last(c, "E") AS close,
+  sum(v) AS volume,
+  sum(q) AS quote_volume
+FROM mini_tickers
+GROUP BY s, bucket;
+
+
+Keep Them Updated
+Enable automatic refresh policy so Timescale keeps aggregates up-to-date:
+
+SELECT add_continuous_aggregate_policy('candle_5m',
+    start_offset => INTERVAL '1 month',
+    end_offset   => INTERVAL '1 minute',
+    schedule_interval => INTERVAL '1 minute');
+
+Repeat for each aggregate (5m, 15m, 1d, etc.).
+
+
+SELECT *
+FROM candle_5m
+WHERE s = 'BTCUSDT'x
+ORDER BY bucket desc;
